@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reisekostenabrechnung - Kakao Mischa</title>
+    <style>
+        :root {
+            --primary: #4a5f3a;
+            --primary-dark: #3a4d2d;
+            --primary-light: #6b8355;
+            --primary-bg: #f5f8f3;
+            --accent: #d4a843;
+            --accent-dark: #b8923a;
+            --accent-light: #f5e6c0;
+            --brown: #6d5843;
+            --bg: #fdfcf9;
+            --card: #ffffff;
+            --text: #3a3a3a;
+            --text-muted: #7a7a7a;
+            --border: #e8e5dd;
+            --error: #c44536;
+            --error-bg: #fef5f3;
+            --success: #6b8355;
+            --success-bg: #f5f8f3;
+            --radius: 16px;
+            --shadow: 0 2px 8px rgba(74, 95, 58, 0.08);
+            --shadow-lg: 0 8px 24px rgba(74, 95, 58, 0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.65;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            padding: 1.75rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 2rem;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 1.25rem; }
+        .header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header-center img {
+            height: 65px;
+            width: auto;
+            filter: brightness(0) invert(1);
+        }
+        .logo {
+            width: 52px; height: 52px;
+            background: var(--accent);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; font-weight: 700; color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(212, 168, 67, 0.3);
+        }
+        .header h1 { font-size: 1.4rem; font-weight: 700; }
+        .header .subtitle { font-size: 0.85rem; opacity: 0.85; }
+        .header-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+        .btn-header {
+            background: rgba(212, 168, 67, 0.2);
+            border: 1.5px solid rgba(212, 168, 67, 0.4);
+            color: white; padding: 0.6rem 1.2rem;
+            border-radius: 10px; cursor: pointer;
+            font-size: 0.85rem; transition: all 0.3s;
+            font-weight: 500;
+        }
+        .btn-header:hover {
+            background: var(--accent);
+            color: var(--primary-dark);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+        .progress-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex; justify-content: center; gap: 0; overflow-x: auto;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 1.25rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            position: relative;
+        }
+        .step::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            border-right: 2px solid var(--border);
+            border-bottom: 2px solid var(--border);
+            transform: rotate(-45deg);
+            background: var(--card);
+        }
+        .step:last-child::after {
+            display: none;
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        .step.active {
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+        .step.active .step-number {
+            background: var(--accent);
+            color: var(--primary-dark);
+            box-shadow: 0 2px 8px rgba(212, 168, 67, 0.3);
+        }
+        .step.completed .step-number {
+            background: var(--success);
+            color: white;
+        }
+        .step.completed .step-number::after {
+            content: '\2713';
+        }
+        .main { max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; }
+        .section { display: none; animation: fadeIn 0.3s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            background: var(--card); border-radius: var(--radius);
+            border: 1.5px solid var(--border);
+            padding: 2rem; margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-light);
+        }
+        .card-title {
+            font-size: 1.2rem; font-weight: 700; margin-bottom: 0.25rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            color: var(--primary-dark);
+        }
+        .card-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-grid.three-col { grid-template-columns: 1fr 1fr 1fr; }
+        .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+        label .required { color: var(--error); margin-left: 2px; }
+        label .hint { font-weight: 400; color: var(--text-muted); font-size: 0.8rem; }
+        input, select, textarea {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s;
+            background: white;
+            color: var(--text);
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(212, 168, 67, 0.15);
+            background: var(--bg);
+        }
+        input[readonly] {
+            background: var(--primary-bg);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        input.error, select.error {
+            border-color: var(--error);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+        .error-msg { font-size: 0.78rem; color: var(--error); display: none; }
+        input.error + .error-msg, select.error + .error-msg { display: block; }
+        textarea { resize: vertical; min-height: 80px; }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 0;
+        }
+        .checkbox-row input[type="checkbox"] {
+            width: 19px;
+            height: 19px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .checkbox-row label {
+            font-weight: 400;
+            cursor: pointer;
+        }
+        .expense-table-wrap { overflow-x: auto; margin: 1rem 0; }
+        .expense-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .expense-table th {
+            background: var(--primary-bg);
+            padding: 0.85rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.8rem;
+            border-bottom: 2px solid var(--accent);
+            white-space: nowrap;
+            color: var(--primary-dark);
+        }
+        .expense-table td { padding: 0.5rem 0.4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+        .expense-table input, .expense-table select { padding: 0.45rem 0.5rem; font-size: 0.85rem; width: 100%; min-width: 80px; }
+        .btn-remove-row {
+            background: none; border: none; color: var(--error);
+            cursor: pointer; font-size: 1.2rem; padding: 0.3rem;
+            border-radius: 6px; transition: background 0.2s;
+        }
+        .btn-remove-row:hover { background: var(--error-bg); }
+        .btn-add-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--accent-light);
+            color: var(--brown);
+            border: 2px dashed var(--accent);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 0.75rem;
+        }
+        .btn-add-row:hover {
+            background: var(--accent);
+            color: var(--primary-dark);
+            border-style: solid;
+            transform: translateY(-1px);
+        }
+        .perdiem-day {
+            display: grid;
+            grid-template-columns: 140px 100px 100px 1fr auto auto;
+            gap: 0.75rem; align-items: center;
+            padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem;
+        }
+        .perdiem-day:last-child { border-bottom: none; }
+        .perdiem-header {
+            display: grid;
+            grid-template-columns: 140px 100px 100px 1fr auto auto;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--accent);
+            background: var(--primary-bg);
+            padding: 0.85rem 0.75rem;
+            border-radius: 10px 10px 0 0;
+        }
+        .meal-checks { display: flex; gap: 0.75rem; }
+        .meal-check { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; }
+        .meal-check input { width: 16px; height: 16px; }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            background: var(--primary-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        .summary-item:hover {
+            border-color: var(--accent-light);
+            box-shadow: 0 2px 8px rgba(74, 95, 58, 0.08);
+        }
+        .summary-item .label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .summary-item .value {
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        .summary-total {
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent-light) 100%);
+            border: 2px solid var(--accent);
+            padding: 1.25rem 1.5rem;
+            border-radius: var(--radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 12px rgba(212, 168, 67, 0.2);
+        }
+        .summary-total .value {
+            color: var(--brown);
+            font-size: 1.5rem;
+        }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-bottom: 3rem; }
+        .btn {
+            padding: 0.85rem 2rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 95, 58, 0.25);
+        }
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--primary);
+            background: var(--primary-bg);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(107, 131, 85, 0.3);
+        }
+        .btn-accent {
+            background: var(--accent);
+            color: var(--primary-dark);
+        }
+        .btn-accent:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 168, 67, 0.3);
+        }
+        .info-box {
+            background: var(--accent-light);
+            border: 1.5px solid var(--accent);
+            border-left: 4px solid var(--accent);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            font-size: 0.9rem;
+            color: var(--brown);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .info-box .icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: 1px;
+            color: var(--accent-dark);
+        }
+        .km-summary {
+            background: var(--primary-bg);
+            border: 1.5px solid var(--primary-light);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 0.75rem;
+        }
+        .km-summary .calc-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.95rem;
+        }
+        .km-summary .calc-total {
+            border-top: 2px solid var(--accent);
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        @media print {
+            .header { position: relative; }
+            .progress-bar, .nav-buttons, .btn-add-row, .btn-remove-row, .btn-header, .col-action { display: none !important; }
+            .section { display: block !important; page-break-inside: avoid; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+            body { background: white; }
+        }
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-grid.three-col { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: 1fr; }
+            .header {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                text-align: center;
+            }
+            .header-left { justify-content: center; }
+            .header-center img { height: 50px; }
+            .header-actions { justify-content: center; }
+            .progress-bar { padding: 0.75rem 1rem; }
+            .step { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+            .step::after { display: none; }
+            .perdiem-day, .perdiem-header { grid-template-columns: 1fr; gap: 0.4rem; font-size: 0.85rem; }
+            .main { padding: 0 1rem; }
+        }
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--success);
+            color: white;
+            padding: 1.25rem 1.75rem;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 24px rgba(74, 95, 58, 0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s;
+            z-index: 200;
+            font-weight: 600;
+            border: 2px solid var(--accent);
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        /* City sub-select */
+        #cityGroup { display: none; }
+        #cityGroup.visible { display: block; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-left">
+        <div class="logo">KM</div>
+        <div>
+            <h1>Kakao Mischa</h1>
+            <div class="subtitle">Reisekostenabrechnung</div>
+        </div>
+    </div>
+    <div class="header-center">
+    </div>
+    <div class="header-actions">
+        <button class="btn-header" onclick="resetForm()">Neu</button>
+        <button class="btn-header" onclick="exportPDF()">PDF Export</button>
+    </div>
+</div>
+
+<!-- Progress Steps -->
+<div class="progress-bar">
+    <div class="step active" onclick="goToStep(0)"><span class="step-number">1</span> Reisedaten</div>
+    <div class="step" onclick="goToStep(1)"><span class="step-number">2</span> Fahrtkosten</div>
+    <div class="step" onclick="goToStep(2)"><span class="step-number">3</span> Einzelbelege</div>
+    <div class="step" onclick="goToStep(3)"><span class="step-number">4</span> Verpflegung</div>
+    <div class="step" onclick="goToStep(4)"><span class="step-number">5</span> Zusammenfassung</div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+    <!-- STEP 1 -->
+    <div class="section active" id="step-0">
+        <div class="card">
+            <div class="card-title">Mitarbeiter-Daten</div>
+            <div class="card-subtitle">Angaben zur abrechnenden Person</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Vorname <span class="required">*</span></label>
+                    <input type="text" id="firstName" placeholder="Max">
+                </div>
+                <div class="form-group">
+                    <label>Nachname <span class="required">*</span></label>
+                    <input type="text" id="lastName" placeholder="Mustermann">
+                </div>
+                <div class="form-group">
+                    <label>IBAN <span class="required">*</span></label>
+                    <input type="text" id="iban" placeholder="DE89 3704 0044 0532 0130 00" maxlength="27">
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Reisedaten</div>
+            <div class="card-subtitle">Wann, wohin und warum?</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Reisebeginn - Datum <span class="required">*</span></label>
+                    <input type="date" id="tripStartDate">
+                </div>
+                <div class="form-group">
+                    <label>Reisebeginn - Uhrzeit <span class="required">*</span></label>
+                    <input type="time" id="tripStartTime">
+                </div>
+                <div class="form-group">
+                    <label>Reiseende - Datum <span class="required">*</span></label>
+                    <input type="date" id="tripEndDate">
+                </div>
+                <div class="form-group">
+                    <label>Reiseende - Uhrzeit <span class="required">*</span></label>
+                    <input type="time" id="tripEndTime">
+                </div>
+                <div class="form-group">
+                    <label>Land <span class="required">*</span></label>
+                    <select id="country" onchange="onCountryChange()">
+                        <option value="DE">Deutschland (Inland)</option>
+                        <option value="AL">Albanien</option>
+                        <option value="AD">Andorra</option>
+                        <option value="BY">Belarus (Weissrussland)</option>
+                        <option value="BE">Belgien</option>
+                        <option value="BA">Bosnien und Herzegowina</option>
+                        <option value="BG">Bulgarien</option>
+                        <option value="DK">Danemark</option>
+                        <option value="EE">Estland</option>
+                        <option value="FI">Finnland</option>
+                        <option value="FR">Frankreich</option>
+                        <option value="GR">Griechenland</option>
+                        <option value="IE">Irland</option>
+                        <option value="IS">Island</option>
+                        <option value="IT">Italien</option>
+                        <option value="XK">Kosovo</option>
+                        <option value="HR">Kroatien</option>
+                        <option value="LV">Lettland</option>
+                        <option value="LI">Liechtenstein</option>
+                        <option value="LT">Litauen</option>
+                        <option value="LU">Luxemburg</option>
+                        <option value="MT">Malta</option>
+                        <option value="MD">Moldau</option>
+                        <option value="MC">Monaco</option>
+                        <option value="ME">Montenegro</option>
+                        <option value="NL">Niederlande</option>
+                        <option value="MK">Nordmazedonien</option>
+                        <option value="NO">Norwegen</option>
+                        <option value="AT">Oesterreich</option>
+                        <option value="PL">Polen</option>
+                        <option value="PT">Portugal</option>
+                        <option value="RO">Rumaenien</option>
+                        <option value="RU">Russland</option>
+                        <option value="SM">San Marino</option>
+                        <option value="SE">Schweden</option>
+                        <option value="CH">Schweiz</option>
+                        <option value="RS">Serbien</option>
+                        <option value="SK">Slowakei</option>
+                        <option value="SI">Slowenien</option>
+                        <option value="ES">Spanien</option>
+                        <option value="CZ">Tschechien</option>
+                        <option value="TR">Tuerkei</option>
+                        <option value="UA">Ukraine</option>
+                        <option value="UK">Vereinigtes Koenigreich</option>
+                        <option value="HU">Ungarn</option>
+                        <option value="CY">Zypern</option>
+                    </select>
+                </div>
+                <div class="form-group" id="cityGroup">
+                    <label>Stadt / Region</label>
+                    <select id="citySelect" onchange="onCityChange()"></select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Reiseziel (Ort / Adresse) <span class="required">*</span></label>
+                    <input type="text" id="destination" placeholder="z.B. Messe Frankfurt, Ludwig-Erhard-Anlage 1, 60327 Frankfurt">
+                </div>
+                <div class="form-group">
+                    <label>Reiseanlass <span class="required">*</span></label>
+                    <select id="tripPurposeType">
+                        <option value="">-- Bitte waehlen --</option>
+                        <option value="customer">Kundenbesuch</option>
+                        <option value="fair">Messe / Ausstellung</option>
+                        <option value="conference">Konferenz / Seminar</option>
+                        <option value="project">Projektarbeit</option>
+                        <option value="training">Schulung / Weiterbildung</option>
+                        <option value="internal">Internes Meeting</option>
+                        <option value="other">Sonstiges</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Reisezweck (Beschreibung) <span class="required">*</span></label>
+                    <textarea id="tripPurpose" placeholder="z.B. Kundenpraesentation neue Produktlinie bei Firma XY"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="nav-buttons"><div></div><button class="btn btn-primary" onclick="nextStep()">Weiter &rarr;</button></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="section" id="step-1">
+        <div class="card">
+            <div class="card-title">Verkehrsmittel</div>
+            <div class="card-subtitle">Wie sind Sie gereist?</div>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Hauptverkehrsmittel <span class="required">*</span></label>
+                    <select id="transportType" onchange="toggleTransportSections()">
+                        <option value="">-- Bitte waehlen --</option>
+                        <option value="car_private">Privat-PKW</option>
+                        <option value="car_company">Firmen-PKW</option>
+                        <option value="train">Bahn</option>
+                        <option value="plane">Flugzeug</option>
+                        <option value="rental">Mietwagen</option>
+                        <option value="public">OPNV / Bus</option>
+                        <option value="mixed">Gemischt</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card" id="kmSection" style="display:none;">
+            <div class="card-title">Kilometerpauschale (Privat-PKW)</div>
+            <div class="card-subtitle">0,30 EUR/km gemaess Einkommensteuergesetz</div>
+            <div class="info-box">
+                <span class="icon">&#9432;</span>
+                <span>Die Pauschale von 0,30 EUR/km wird automatisch berechnet.</span>
+            </div>
+            <div class="form-grid three-col">
+                <div class="form-group"><label>Startort</label><input type="text" id="kmStart" placeholder="z.B. Buero Berlin"></div>
+                <div class="form-group"><label>Zielort</label><input type="text" id="kmEnd" placeholder="z.B. Messe Frankfurt"></div>
+                <div class="form-group"><label>Gefahrene km (einfach) <span class="required">*</span></label><input type="number" id="kmOneWay" min="0" step="1" placeholder="420" oninput="calcKm()"></div>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="kmRoundTrip" checked onchange="calcKm()">
+                <label for="kmRoundTrip">Hin- und Rueckfahrt (km x 2)</label>
+            </div>
+            <div class="km-summary" id="kmCalc">
+                <div class="calc-line"><span>Einfache Strecke</span><span id="kmOneway">0 km</span></div>
+                <div class="calc-line"><span>Hin- und Rueckfahrt</span><span id="kmTotal">0 km</span></div>
+                <div class="calc-line calc-total"><span>Erstattung (0,30 EUR/km)</span><span id="kmAmount">0,00 EUR</span></div>
+            </div>
+        </div>
+        <div class="card" id="ticketSection" style="display:none;">
+            <div class="card-title">Fahrtkosten (Tickets / Belege)</div>
+            <div class="card-subtitle">Fahrscheine, Flugtickets, Mietwagen etc.</div>
+            <div class="expense-table-wrap">
+                <table class="expense-table">
+                    <thead><tr><th>Beschreibung</th><th style="width:120px">Betrag (EUR)</th><th style="width:44px"></th></tr></thead>
+                    <tbody id="ticketBody">
+                        <tr>
+                            <td><input type="text" placeholder="z.B. ICE Frankfurt-Berlin"></td>
+                            <td><input type="number" step="0.01" min="0" placeholder="0,00" class="ticket-amount" oninput="calcTickets()"></td>
+                            <td><button class="btn-remove-row" onclick="removeRow(this)">&times;</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn-add-row" onclick="addTicketRow()">+ Fahrt hinzufuegen</button>
+            <div class="km-summary" style="margin-top:1rem;"><div class="calc-line calc-total"><span>Summe Fahrtkosten</span><span id="ticketTotal">0,00 EUR</span></div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">Uebernachtung</div>
+            <div class="card-subtitle">Hotelkosten oder Uebernachtungspauschale</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Art der Abrechnung</label>
+                    <select id="accommodationType" onchange="toggleAccomm()">
+                        <option value="none">Keine Uebernachtung</option>
+                        <option value="actual">Tatsaechliche Kosten (Beleg)</option>
+                        <option value="flat">Pauschale</option>
+                    </select>
+                </div>
+                <div class="form-group" id="accommNightsGroup" style="display:none;">
+                    <label>Anzahl Naechte <span class="required">*</span></label>
+                    <input type="number" id="accommNights" min="0" step="1" placeholder="2" oninput="calcAccomm()">
+                </div>
+                <div class="form-group" id="accommCostGroup" style="display:none;">
+                    <label>Gesamtkosten (EUR) <span class="required">*</span></label>
+                    <input type="number" id="accommCost" min="0" step="0.01" placeholder="189,00" oninput="calcAccomm()">
+                </div>
+            </div>
+            <div class="info-box" id="accommFlatInfo" style="display:none;">
+                <span class="icon">&#9432;</span>
+                <span id="accommFlatText">Pauschale: 20,00 EUR/Nacht (Deutschland Inland)</span>
+            </div>
+            <div class="info-box" id="accommHotelHint" style="display:none;">
+                <span class="icon">&#9432;</span>
+                <span>Hotelrechnungen muessen auf die Firma (Kakao Mischa) ausgestellt sein. Fruehstueck muss separat ausgewiesen werden.</span>
+            </div>
+            <div class="km-summary" id="accommCalc" style="display:none; margin-top:0.75rem;">
+                <div class="calc-line calc-total"><span>Uebernachtungskosten</span><span id="accommTotal">0,00 EUR</span></div>
+            </div>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="prevStep()">&larr; Zurueck</button>
+            <button class="btn btn-primary" onclick="nextStep()">Weiter &rarr;</button>
+        </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="section" id="step-2">
+        <div class="card">
+            <div class="card-title">Einzelbelege / Nebenkosten</div>
+            <div class="card-subtitle">Alle weiteren Ausgaben mit Beleg</div>
+            <div class="info-box">
+                <span class="icon">&#9432;</span>
+                <span>Jede Ausgabe muss mit einem Beleg nachgewiesen werden. Belege unter 250 EUR brutto: vereinfachte Angaben genuegen.</span>
+            </div>
+            <div class="expense-table-wrap">
+                <table class="expense-table">
+                    <thead>
+                        <tr>
+                            <th style="width:120px">Datum</th>
+                            <th style="width:140px">Kategorie</th>
+                            <th>Beschreibung</th>
+                            <th style="width:100px">Netto</th>
+                            <th style="width:80px">MwSt</th>
+                            <th style="width:100px">Brutto</th>
+                            <th style="width:90px">Beleg?</th>
+                            <th style="width:40px"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseBody"></tbody>
+                </table>
+            </div>
+            <button class="btn-add-row" onclick="addExpenseRow()">+ Beleg hinzufuegen</button>
+            <div class="km-summary" style="margin-top:1rem;"><div class="calc-line calc-total"><span>Summe Einzelbelege (brutto)</span><span id="expenseTotal">0,00 EUR</span></div></div>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="prevStep()">&larr; Zurueck</button>
+            <button class="btn btn-primary" onclick="nextStep()">Weiter &rarr;</button>
+        </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="section" id="step-3">
+        <div class="card">
+            <div class="card-title">Verpflegungsmehraufwand</div>
+            <div class="card-subtitle">Automatische Berechnung der Pauschalen nach EStG</div>
+            <div class="info-box">
+                <span class="icon">&#9432;</span>
+                <span id="perdiemInfoText"><strong>Inland:</strong> Ab 8h = 14 EUR | Ab 24h = 28 EUR/Tag. An-/Abreisetage: 14 EUR. Gestellte Mahlzeiten bitte ankreuzen (F=Fruehstueck 20%, M=Mittag 40%, A=Abend 40% Kuerzung).</span>
+            </div>
+            <div id="perdiemContainer">
+                <div class="perdiem-header">
+                    <span>Datum</span><span>Typ</span><span>Pauschale</span>
+                    <span>Gestellte Mahlzeiten</span><span>Kuerzung</span><span>Betrag</span>
+                </div>
+                <div id="perdiemDays">
+                    <p style="padding:1rem; color:var(--text-muted); font-size:0.9rem;">Bitte zuerst in Schritt 1 die Reisedaten eingeben.</p>
+                </div>
+            </div>
+            <div class="km-summary" style="margin-top:1rem;"><div class="calc-line calc-total"><span>Summe Verpflegungspauschalen</span><span id="perdiemTotal">0,00 EUR</span></div></div>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="prevStep()">&larr; Zurueck</button>
+            <button class="btn btn-primary" onclick="nextStep()">Weiter &rarr;</button>
+        </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="section" id="step-4">
+        <div class="card">
+            <div class="card-title">Zusammenfassung</div>
+            <div class="card-subtitle">Pruefen Sie alle Angaben vor dem Export</div>
+            <h3 style="margin-top:1rem; font-size:0.95rem; color:var(--text-muted);">Reisende/r</h3>
+            <div class="summary-grid" style="margin:0.5rem 0 1rem;">
+                <div class="summary-item"><span class="label">Name</span><span class="value" id="sumName">-</span></div>
+                <div class="summary-item"><span class="label">IBAN</span><span class="value" id="sumIBAN">-</span></div>
+            </div>
+            <h3 style="font-size:0.95rem; color:var(--text-muted);">Reise</h3>
+            <div class="summary-grid" style="margin:0.5rem 0 1rem;">
+                <div class="summary-item"><span class="label">Zeitraum</span><span class="value" id="sumDates">-</span></div>
+                <div class="summary-item"><span class="label">Ziel</span><span class="value" id="sumDest">-</span></div>
+                <div class="summary-item full-width"><span class="label">Zweck</span><span class="value" id="sumPurpose">-</span></div>
+            </div>
+            <h3 style="font-size:0.95rem; color:var(--text-muted);">Kostenuebersicht</h3>
+            <div style="margin:0.5rem 0 1rem;">
+                <div class="summary-item" style="margin-bottom:0.5rem;"><span class="label">Fahrtkosten</span><span class="value" id="sumTransport">0,00 EUR</span></div>
+                <div class="summary-item" style="margin-bottom:0.5rem;"><span class="label">Uebernachtung</span><span class="value" id="sumAccomm">0,00 EUR</span></div>
+                <div class="summary-item" style="margin-bottom:0.5rem;"><span class="label">Einzelbelege / Nebenkosten</span><span class="value" id="sumExpenses">0,00 EUR</span></div>
+                <div class="summary-item" style="margin-bottom:0.5rem;"><span class="label">Verpflegungspauschalen</span><span class="value" id="sumPerdiem">0,00 EUR</span></div>
+            </div>
+            <div class="summary-total">
+                <span>Erstattungsbetrag</span>
+                <span class="value" id="sumTotal">0,00 EUR</span>
+            </div>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="prevStep()">&larr; Zurueck</button>
+            <button class="btn btn-success" onclick="exportPDF()">PDF exportieren</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== COUNTRY RATES (BMF 2026) ====================
+// Format: { full: 24h rate, partial: >8h rate, overnight: flat rate per night }
+// Cities stored as sub-keys where applicable
+const COUNTRY_RATES = {
+    DE: { full: 28, partial: 14, overnight: 20 },
+    AL: { full: 33, partial: 22, overnight: 116 },
+    AD: { full: 45, partial: 30, overnight: 135 },
+    BY: { full: 21, partial: 14, overnight: 148 },
+    BE: { full: 59, partial: 40, overnight: 141 },
+    BA: { full: 32, partial: 21, overnight: 109 },
+    BG: { full: 38, partial: 25, overnight: 109 },
+    DK: { full: 75, partial: 50, overnight: 183 },
+    EE: { full: 39, partial: 26, overnight: 125 },
+    FI: { full: 54, partial: 36, overnight: 171 },
+    FR: { full: 53, partial: 36, overnight: 105,
+        cities: {
+            'Paris (+ Dep. 92,93,94)': { full: 58, partial: 39, overnight: 159 },
+            'Rest des Landes': { full: 53, partial: 36, overnight: 105 }
+        }
+    },
+    GR: { full: 36, partial: 24, overnight: 150,
+        cities: {
+            'Athen': { full: 40, partial: 27, overnight: 139 },
+            'Rest des Landes': { full: 36, partial: 24, overnight: 150 }
+        }
+    },
+    IE: { full: 64, partial: 43, overnight: 164 },
+    IS: { full: 62, partial: 41, overnight: 187 },
+    IT: { full: 42, partial: 28, overnight: 150,
+        cities: {
+            'Rom': { full: 48, partial: 32, overnight: 150 },
+            'Mailand': { full: 42, partial: 28, overnight: 191 },
+            'Rest des Landes': { full: 42, partial: 28, overnight: 150 }
+        }
+    },
+    XK: { full: 24, partial: 16, overnight: 71 },
+    HR: { full: 46, partial: 31, overnight: 191 },
+    LV: { full: 46, partial: 31, overnight: 119 },
+    LI: { full: 57, partial: 38, overnight: 234 },
+    LT: { full: 48, partial: 32, overnight: 124 },
+    LU: { full: 63, partial: 42, overnight: 139 },
+    MT: { full: 59, partial: 40, overnight: 191 },
+    MD: { full: 26, partial: 17, overnight: 73 },
+    MC: { full: 52, partial: 35, overnight: 187 },
+    ME: { full: 32, partial: 21, overnight: 85 },
+    NL: { full: 58, partial: 39, overnight: 167 },
+    MK: { full: 27, partial: 18, overnight: 89 },
+    NO: { full: 75, partial: 50, overnight: 139 },
+    AT: { full: 50, partial: 33, overnight: 117 },
+    PL: { full: 34, partial: 23, overnight: 124,
+        cities: {
+            'Warschau': { full: 40, partial: 27, overnight: 143 },
+            'Breslau': { full: 34, partial: 23, overnight: 124 },
+            'Danzig': { full: 34, partial: 23, overnight: 124 },
+            'Krakau': { full: 34, partial: 23, overnight: 124 },
+            'Rest des Landes': { full: 34, partial: 23, overnight: 124 }
+        }
+    },
+    PT: { full: 32, partial: 21, overnight: 111 },
+    RO: { full: 38, partial: 25, overnight: 103 },
+    RU: { full: 28, partial: 19, overnight: 133,
+        cities: {
+            'Moskau': { full: 30, partial: 20, overnight: 235 },
+            'St. Petersburg': { full: 28, partial: 19, overnight: 133 },
+            'Rest des Landes': { full: 28, partial: 19, overnight: 133 }
+        }
+    },
+    SM: { full: 34, partial: 23, overnight: 79 },
+    SE: { full: 66, partial: 44, overnight: 140 },
+    CH: { full: 70, partial: 47, overnight: 195,
+        cities: {
+            'Bern': { full: 82, partial: 55, overnight: 195 },
+            'Genf': { full: 70, partial: 47, overnight: 197 },
+            'Rest des Landes': { full: 70, partial: 47, overnight: 195 }
+        }
+    },
+    RS: { full: 27, partial: 18, overnight: 97 },
+    SK: { full: 33, partial: 22, overnight: 121 },
+    SI: { full: 38, partial: 25, overnight: 126 },
+    ES: { full: 34, partial: 23, overnight: 103,
+        cities: {
+            'Madrid': { full: 42, partial: 28, overnight: 131 },
+            'Barcelona': { full: 34, partial: 23, overnight: 144 },
+            'Palma de Mallorca': { full: 44, partial: 29, overnight: 142 },
+            'Kanarische Inseln': { full: 36, partial: 24, overnight: 103 },
+            'Rest des Landes': { full: 34, partial: 23, overnight: 103 }
+        }
+    },
+    CZ: { full: 32, partial: 21, overnight: 77 },
+    TR: { full: 24, partial: 16, overnight: 107,
+        cities: {
+            'Ankara': { full: 32, partial: 21, overnight: 110 },
+            'Istanbul': { full: 24, partial: 16, overnight: 107 },
+            'Izmir': { full: 44, partial: 29, overnight: 120 },
+            'Rest des Landes': { full: 24, partial: 16, overnight: 107 }
+        }
+    },
+    UA: { full: 33, partial: 22, overnight: 180 },
+    UK: { full: 52, partial: 35, overnight: 99,
+        cities: {
+            'London': { full: 66, partial: 44, overnight: 163 },
+            'Rest des Landes': { full: 52, partial: 35, overnight: 99 }
+        }
+    },
+    HU: { full: 32, partial: 21, overnight: 85 },
+    CY: { full: 42, partial: 28, overnight: 125 }
+};
+
+// ==================== STATE ====================
+let currentStep = 0;
+const totalSteps = 5;
+
+function getActiveRates() {
+    const code = document.getElementById('country').value;
+    const base = COUNTRY_RATES[code] || COUNTRY_RATES.LU; // Fallback: Luxembourg
+    const citySelect = document.getElementById('citySelect');
+    if (base.cities && citySelect.value && base.cities[citySelect.value]) {
+        return base.cities[citySelect.value];
+    }
+    return base;
+}
+
+// ==================== COUNTRY / CITY ====================
+function onCountryChange() {
+    const code = document.getElementById('country').value;
+    const data = COUNTRY_RATES[code];
+    const cityGroup = document.getElementById('cityGroup');
+    const citySelect = document.getElementById('citySelect');
+
+    if (data && data.cities) {
+        citySelect.innerHTML = '';
+        Object.keys(data.cities).forEach(city => {
+            const opt = document.createElement('option');
+            opt.value = city; opt.textContent = city;
+            citySelect.appendChild(opt);
+        });
+        cityGroup.classList.add('visible');
+    } else {
+        cityGroup.classList.remove('visible');
+        citySelect.innerHTML = '';
+    }
+    updateAccommFlatInfo();
+}
+
+function onCityChange() { updateAccommFlatInfo(); }
+
+function updateAccommFlatInfo() {
+    const rates = getActiveRates();
+    const text = document.getElementById('accommFlatText');
+    const countryName = document.getElementById('country').selectedOptions[0].textContent;
+    text.textContent = `Pauschale: ${formatEUR(rates.overnight)}/Nacht (${countryName})`;
+    calcAccomm();
+}
+
+// ==================== NAVIGATION ====================
+function goToStep(step) {
+    if (step < 0 || step >= totalSteps) return;
+    if (step === 3) calculatePerDiem();
+    if (step === 4) { calculatePerDiem(); calcSummary(); }
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(`step-${step}`).classList.add('active');
+    document.querySelectorAll('.step').forEach((s, i) => {
+        s.classList.remove('active');
+        if (i < step) s.classList.add('completed'); else s.classList.remove('completed');
+        if (i === step) s.classList.add('active');
+    });
+    currentStep = step;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function nextStep() { if (currentStep < totalSteps - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+// ==================== TRANSPORT ====================
+function toggleTransportSections() {
+    const type = document.getElementById('transportType').value;
+    document.getElementById('kmSection').style.display = (type === 'car_private') ? 'block' : 'none';
+    document.getElementById('ticketSection').style.display = (['train','plane','rental','public','mixed','car_company'].includes(type)) ? 'block' : 'none';
+}
+function calcKm() {
+    const oneWay = parseFloat(document.getElementById('kmOneWay').value) || 0;
+    const rt = document.getElementById('kmRoundTrip').checked;
+    const total = rt ? oneWay * 2 : oneWay;
+    document.getElementById('kmOneway').textContent = oneWay + ' km';
+    document.getElementById('kmTotal').textContent = total + ' km';
+    document.getElementById('kmAmount').textContent = formatEUR(total * 0.30);
+}
+
+// ==================== TICKETS ====================
+function addTicketRow() {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input type="text" placeholder="z.B. Taxi zum Hotel"></td><td><input type="number" step="0.01" min="0" placeholder="0,00" class="ticket-amount" oninput="calcTickets()"></td><td><button class="btn-remove-row" onclick="removeRow(this)">&times;</button></td>`;
+    document.getElementById('ticketBody').appendChild(tr);
+}
+function calcTickets() {
+    let t = 0; document.querySelectorAll('.ticket-amount').forEach(i => t += parseFloat(i.value) || 0);
+    document.getElementById('ticketTotal').textContent = formatEUR(t);
+}
+
+// ==================== ACCOMMODATION ====================
+function toggleAccomm() {
+    const type = document.getElementById('accommodationType').value;
+    document.getElementById('accommNightsGroup').style.display = (type !== 'none') ? 'block' : 'none';
+    document.getElementById('accommCostGroup').style.display = (type === 'actual') ? 'block' : 'none';
+    document.getElementById('accommHotelHint').style.display = (type === 'actual') ? 'flex' : 'none';
+    document.getElementById('accommFlatInfo').style.display = (type === 'flat') ? 'flex' : 'none';
+    document.getElementById('accommCalc').style.display = (type !== 'none') ? 'block' : 'none';
+    calcAccomm();
+}
+function calcAccomm() {
+    const type = document.getElementById('accommodationType').value;
+    const nights = parseInt(document.getElementById('accommNights').value) || 0;
+    let total = 0;
+    if (type === 'flat') {
+        const rates = getActiveRates();
+        total = nights * rates.overnight;
+    } else if (type === 'actual') {
+        total = parseFloat(document.getElementById('accommCost').value) || 0;
+    }
+    document.getElementById('accommTotal').textContent = formatEUR(total);
+}
+
+// ==================== EXPENSES ====================
+function addExpenseRow() {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="date" class="exp-date"></td>
+        <td><select class="exp-cat"><option value="parking">Parkgebuehren</option><option value="toll">Maut/Tunnel</option><option value="taxi">Taxi</option><option value="phone">Telefon</option><option value="entrance">Eintritt/Messe</option><option value="luggage">Gepaeck</option><option value="tip">Trinkgeld</option><option value="entertainment">Bewirtung</option><option value="material">Arbeitsmaterial</option><option value="other">Sonstiges</option></select></td>
+        <td><input type="text" placeholder="Beschreibung" class="exp-desc"></td>
+        <td><input type="number" step="0.01" min="0" placeholder="Netto" class="exp-net" oninput="calcExpRow(this)"></td>
+        <td><select class="exp-vat" onchange="calcExpRow(this)"><option value="0">0%</option><option value="7">7%</option><option value="19" selected>19%</option></select></td>
+        <td><input type="number" step="0.01" min="0" placeholder="Brutto" class="exp-gross" oninput="calcExpRowFromGross(this)"></td>
+        <td><select class="exp-receipt"><option value="yes">Ja</option><option value="eigen">Eigenbeleg</option><option value="no">Nein</option></select></td>
+        <td><button class="btn-remove-row" onclick="removeRow(this)">&times;</button></td>`;
+    document.getElementById('expenseBody').appendChild(tr);
+}
+function calcExpRow(el) {
+    const row = el.closest('tr');
+    const net = parseFloat(row.querySelector('.exp-net').value) || 0;
+    const vat = parseFloat(row.querySelector('.exp-vat').value) || 0;
+    row.querySelector('.exp-gross').value = (net * (1 + vat / 100)).toFixed(2);
+    calcExpenses();
+}
+function calcExpRowFromGross(el) {
+    const row = el.closest('tr');
+    const gross = parseFloat(row.querySelector('.exp-gross').value) || 0;
+    const vat = parseFloat(row.querySelector('.exp-vat').value) || 0;
+    row.querySelector('.exp-net').value = (gross / (1 + vat / 100)).toFixed(2);
+    calcExpenses();
+}
+function calcExpenses() {
+    let t = 0; document.querySelectorAll('.exp-gross').forEach(i => t += parseFloat(i.value) || 0);
+    document.getElementById('expenseTotal').textContent = formatEUR(t);
+}
+function removeRow(btn) { btn.closest('tr').remove(); calcTickets(); calcExpenses(); }
+
+// ==================== PER DIEM ====================
+function calculatePerDiem() {
+    const sd = document.getElementById('tripStartDate').value;
+    const st = document.getElementById('tripStartTime').value;
+    const ed = document.getElementById('tripEndDate').value;
+    const et = document.getElementById('tripEndTime').value;
+    if (!sd || !ed || !st || !et) {
+        document.getElementById('perdiemDays').innerHTML = '<p style="padding:1rem;color:var(--text-muted);font-size:0.9rem;">Bitte zuerst in Schritt 1 die Reisedaten eingeben.</p>';
+        return;
+    }
+    const start = new Date(`${sd}T${st}`);
+    const end = new Date(`${ed}T${et}`);
+    if (end <= start) {
+        document.getElementById('perdiemDays').innerHTML = '<p style="padding:1rem;color:var(--error);font-size:0.9rem;">Reiseende muss nach Reisebeginn liegen.</p>';
+        return;
+    }
+    const rates = getActiveRates();
+    const countryName = document.getElementById('country').selectedOptions[0].textContent;
+
+    // Update info text for foreign trips
+    if (document.getElementById('country').value !== 'DE') {
+        document.getElementById('perdiemInfoText').innerHTML = `<strong>${countryName}:</strong> Ab 8h = ${formatEUR(rates.partial)} | Ab 24h = ${formatEUR(rates.full)}/Tag. Kuerzung bei gestellten Mahlzeiten: F=20%, M=40%, A=40% vom Tagessatz.`;
+    } else {
+        document.getElementById('perdiemInfoText').innerHTML = '<strong>Inland:</strong> Ab 8h = 14 EUR | Ab 24h = 28 EUR/Tag. An-/Abreisetage: 14 EUR. Gestellte Mahlzeiten bitte ankreuzen (F=Fruehstueck 20%, M=Mittag 40%, A=Abend 40% Kuerzung).';
+    }
+
+    const days = [];
+    const startDay = new Date(start); startDay.setHours(0,0,0,0);
+    const endDay = new Date(end); endDay.setHours(0,0,0,0);
+
+    if (sd === ed) {
+        const hours = (end - start) / 3600000;
+        days.push({ date: sd, type: hours >= 8 ? 'single_partial' : 'single_short', rate: hours >= 8 ? rates.partial : 0 });
+    } else {
+        let d = new Date(startDay);
+        while (d <= endDay) {
+            const ds = d.toISOString().split('T')[0];
+            if (ds === sd) days.push({ date: ds, type: 'arrival', rate: rates.partial });
+            else if (ds === ed) days.push({ date: ds, type: 'departure', rate: rates.partial });
+            else days.push({ date: ds, type: 'full', rate: rates.full });
+            d.setDate(d.getDate() + 1);
+        }
+    }
+
+    const typeLabels = { arrival:'Anreisetag', departure:'Abreisetag', full:'Ganzer Tag', single_partial:'Eintaegig (>8h)', single_short:'Eintaegig (<8h)' };
+    let html = '';
+    days.forEach((day, i) => {
+        html += `<div class="perdiem-day" data-index="${i}" data-rate="${day.rate}" data-fullrate="${rates.full}">
+            <span>${formatDate(day.date)}</span><span>${typeLabels[day.type]}</span><span>${formatEUR(day.rate)}</span>
+            <div class="meal-checks">
+                <label class="meal-check"><input type="checkbox" class="meal-b" onchange="calcPerdiemTotals()"> F</label>
+                <label class="meal-check"><input type="checkbox" class="meal-l" onchange="calcPerdiemTotals()"> M</label>
+                <label class="meal-check"><input type="checkbox" class="meal-d" onchange="calcPerdiemTotals()"> A</label>
+            </div>
+            <span class="perdiem-deduction">0,00 EUR</span>
+            <span class="perdiem-result">${formatEUR(day.rate)}</span>
+        </div>`;
+    });
+    document.getElementById('perdiemDays').innerHTML = html;
+    calcPerdiemTotals();
+}
+
+function calcPerdiemTotals() {
+    let total = 0;
+    document.querySelectorAll('.perdiem-day').forEach(row => {
+        const rate = parseFloat(row.dataset.rate);
+        const fullRate = parseFloat(row.dataset.fullrate);
+        let ded = 0;
+        if (row.querySelector('.meal-b').checked) ded += fullRate * 0.20;
+        if (row.querySelector('.meal-l').checked) ded += fullRate * 0.40;
+        if (row.querySelector('.meal-d').checked) ded += fullRate * 0.40;
+        ded = Math.min(ded, rate);
+        const result = Math.max(0, rate - ded);
+        row.querySelector('.perdiem-deduction').textContent = ded > 0 ? '-' + formatEUR(ded) : '0,00 EUR';
+        row.querySelector('.perdiem-result').textContent = formatEUR(result);
+        total += result;
+    });
+    document.getElementById('perdiemTotal').textContent = formatEUR(total);
+}
+
+// ==================== SUMMARY ====================
+function calcSummary() {
+    const fn = document.getElementById('firstName').value;
+    const ln = document.getElementById('lastName').value;
+    document.getElementById('sumName').textContent = (fn || ln) ? `${fn} ${ln}`.trim() : '-';
+    document.getElementById('sumIBAN').textContent = document.getElementById('iban').value || '-';
+    const sd = document.getElementById('tripStartDate').value;
+    const st = document.getElementById('tripStartTime').value;
+    const ed = document.getElementById('tripEndDate').value;
+    const et = document.getElementById('tripEndTime').value;
+    document.getElementById('sumDates').textContent = (sd && ed) ? `${formatDate(sd)} ${st} - ${formatDate(ed)} ${et}` : '-';
+    document.getElementById('sumDest').textContent = document.getElementById('destination').value || '-';
+    document.getElementById('sumPurpose').textContent = document.getElementById('tripPurpose').value || '-';
+
+    let transport = 0;
+    if (document.getElementById('transportType').value === 'car_private') {
+        const ow = parseFloat(document.getElementById('kmOneWay').value) || 0;
+        transport = (document.getElementById('kmRoundTrip').checked ? ow * 2 : ow) * 0.30;
+    }
+    document.querySelectorAll('.ticket-amount').forEach(i => transport += parseFloat(i.value) || 0);
+    document.getElementById('sumTransport').textContent = formatEUR(transport);
+
+    const accomm = parseAmount(document.getElementById('accommTotal').textContent);
+    document.getElementById('sumAccomm').textContent = formatEUR(accomm);
+    const exp = parseAmount(document.getElementById('expenseTotal').textContent);
+    document.getElementById('sumExpenses').textContent = formatEUR(exp);
+    const pd = parseAmount(document.getElementById('perdiemTotal').textContent);
+    document.getElementById('sumPerdiem').textContent = formatEUR(pd);
+    const total = transport + accomm + exp + pd;
+    document.getElementById('sumTotal').textContent = formatEUR(total);
+}
+
+// ==================== PDF EXPORT ====================
+function exportPDF() {
+    // Ensure summary is calculated
+    calculatePerDiem();
+    calcSummary();
+
+    const data = gatherFormData();
+    const win = window.open('', '_blank');
+    if (!win) { showToast('Popup blockiert - bitte Pop-ups erlauben.', 'error'); return; }
+
+    const catLabels = { parking:'Parkgeb.', toll:'Maut', taxi:'Taxi', phone:'Telefon', entrance:'Eintritt', luggage:'Gepaeck', tip:'Trinkgeld', entertainment:'Bewirtung', material:'Material', other:'Sonst.' };
+    const transportLabels = { car_private:'Privat-PKW', car_company:'Firmen-PKW', train:'Bahn', plane:'Flugzeug', rental:'Mietwagen', public:'OEPNV', mixed:'Gemischt' };
+
+    // Per diem rows
+    let perdiemRows = '';
+    data.perDiem.forEach(d => {
+        const meals = [];
+        if (d.breakfastProvided) meals.push('F');
+        if (d.lunchProvided) meals.push('M');
+        if (d.dinnerProvided) meals.push('A');
+        perdiemRows += `<tr><td>${d.date}</td><td>${d.type}</td><td class="r">${fmtE(d.rate)}</td><td>${meals.join(', ') || '-'}</td><td class="r">${fmtE(d.deduction)}</td><td class="r"><strong>${fmtE(d.result)}</strong></td></tr>`;
+    });
+
+    // Expense rows
+    let expRows = '';
+    data.expenses.forEach(e => {
+        if (e.gross > 0 || e.description) {
+            expRows += `<tr><td>${e.date ? formatDate(e.date) : '-'}</td><td>${catLabels[e.category] || e.category}</td><td>${e.description}</td><td class="r">${fmtE(e.net)}</td><td class="r">${e.vat}%</td><td class="r">${fmtE(e.gross)}</td><td>${e.receipt === 'yes' ? 'Ja' : e.receipt === 'eigen' ? 'Eigen' : 'Nein'}</td></tr>`;
+        }
+    });
+
+    // Ticket rows
+    let ticketRows = '';
+    data.tickets.forEach(t => {
+        if (t.amount > 0 || t.description) {
+            ticketRows += `<tr><td>${t.description}</td><td class="r">${fmtE(t.amount)}</td></tr>`;
+        }
+    });
+
+    // Transport detail
+    let transportDetail = '';
+    if (data.transport.type === 'car_private') {
+        const km = data.transport.roundTrip ? data.transport.km * 2 : data.transport.km;
+        transportDetail = `<p><strong>Privat-PKW:</strong> ${data.transport.kmStart || '-'} &rarr; ${data.transport.kmEnd || '-'} | ${data.transport.km} km einfach${data.transport.roundTrip ? ' (Hin+Rueck: ' + km + ' km)' : ''} x 0,30 EUR = <strong>${fmtE(km * 0.30)}</strong></p>`;
+    }
+
+    // Accommodation detail
+    let accommDetail = '';
+    if (data.accommodation.type === 'flat') {
+        accommDetail = `Pauschale: ${data.accommodation.nights} Naechte x ${fmtE(data.accommodation.ratePerNight)} = <strong>${fmtE(data.totals.accommodation)}</strong>`;
+    } else if (data.accommodation.type === 'actual') {
+        accommDetail = `Tatsaechliche Kosten: <strong>${fmtE(data.totals.accommodation)}</strong>`;
+    } else {
+        accommDetail = 'Keine Uebernachtung';
+    }
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reisekostenabrechnung ${data.employee.lastName}</title>
+    <style>
+        @page { size: A4; margin: 15mm 18mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 9pt; color: #3a3a3a; line-height: 1.5; background: #fdfcf9; }
+        .header-bar { background: linear-gradient(135deg, #3a4d2d 0%, #4a5f3a 100%); color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-radius: 10px; box-shadow: 0 4px 12px rgba(74, 95, 58, 0.15); }
+        .header-bar h1 { font-size: 15pt; font-weight: 700; }
+        .header-bar .sub { font-size: 8.5pt; opacity: 0.9; margin-top: 2px; }
+        .header-bar .date { font-size: 8pt; text-align: right; line-height: 1.6; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .box { border: 1.5px solid #e8e5dd; border-radius: 10px; padding: 10px 12px; background: #f5f8f3; }
+        .box h3 { font-size: 8pt; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; font-weight: 600; }
+        .box .val { font-size: 10pt; font-weight: 700; color: #3a4d2d; }
+        h2 { font-size: 10.5pt; color: #4a5f3a; border-bottom: 2px solid #d4a843; padding-bottom: 4px; margin: 14px 0 8px; font-weight: 700; }
+        table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 10px; }
+        th { background: #f5f8f3; padding: 6px 8px; text-align: left; font-weight: 700; border-bottom: 2px solid #d4a843; font-size: 7.5pt; text-transform: uppercase; color: #3a4d2d; }
+        td { padding: 5px 8px; border-bottom: 1px solid #e8e5dd; }
+        .r { text-align: right; }
+        .total-row td { border-top: 2px solid #d4a843; font-weight: 700; background: #f5f8f3; color: #3a4d2d; }
+        .grand-total { background: linear-gradient(135deg, #f5e6c0 0%, #f5e6c0 100%); color: #6d5843; padding: 12px 18px; border-radius: 10px; display: flex; justify-content: space-between; font-size: 13pt; font-weight: 700; margin-top: 14px; border: 2px solid #d4a843; box-shadow: 0 4px 12px rgba(212, 168, 67, 0.2); }
+        .footer { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; font-size: 8pt; color: #7a7a7a; }
+        .sig-line { border-top: 1.5px solid #7a7a7a; padding-top: 5px; margin-top: 32px; }
+        .small { font-size: 7.5pt; color: #7a7a7a; }
+        p { margin: 3px 0; font-size: 9pt; }
+        .section-note { font-size: 8pt; color: #7a7a7a; margin-bottom: 5px; }
+    </style></head><body>
+    <div class="header-bar">
+        <div><h1>Kakao Mischa</h1><div class="sub">Reisekostenabrechnung</div></div>
+        <div class="date">Erstellt: ${new Date().toLocaleDateString('de-DE')}<br>Abrechnungsnr.: RK-${Date.now().toString(36).toUpperCase()}</div>
+    </div>
+
+    <div class="grid2">
+        <div class="box"><h3>Reisende/r</h3><div class="val">${data.employee.firstName} ${data.employee.lastName}</div>
+            <div class="small">IBAN: ${data.employee.iban || '-'}</div>
+        </div>
+        <div class="box"><h3>Reiseziel & Zweck</h3>
+            <div class="val">${data.trip.destination || '-'}</div>
+            <div class="small">${data.trip.country}</div>
+            <div class="small" style="margin-top:2px;">${data.trip.purpose || '-'}</div>
+        </div>
+    </div>
+    <div class="grid3">
+        <div class="box"><h3>Reisebeginn</h3><div class="val">${formatDate(data.trip.startDate)} ${data.trip.startTime}</div></div>
+        <div class="box"><h3>Reiseende</h3><div class="val">${formatDate(data.trip.endDate)} ${data.trip.endTime}</div></div>
+        <div class="box"><h3>Verkehrsmittel</h3><div class="val">${transportLabels[data.transport.type] || '-'}</div></div>
+    </div>
+
+    ${(transportDetail || ticketRows) ? `<h2>Fahrtkosten</h2>${transportDetail}${ticketRows ? `<table><thead><tr><th>Beschreibung</th><th class="r">Betrag</th></tr></thead><tbody>${ticketRows}<tr class="total-row"><td><strong>Summe Fahrtkosten</strong></td><td class="r"><strong>${fmtE(data.totals.transport)}</strong></td></tr></tbody></table>` : `<p class="section-note">Summe: <strong>${fmtE(data.totals.transport)}</strong></p>`}` : ''}
+
+    <h2>Uebernachtung</h2>
+    <p>${accommDetail}</p>
+
+    ${expRows ? `<h2>Einzelbelege / Nebenkosten</h2>
+    <table><thead><tr><th>Datum</th><th>Kat.</th><th>Beschreibung</th><th class="r">Netto</th><th class="r">MwSt</th><th class="r">Brutto</th><th>Beleg</th></tr></thead>
+    <tbody>${expRows}<tr class="total-row"><td colspan="5"><strong>Summe Einzelbelege</strong></td><td class="r"><strong>${fmtE(data.totals.expenses)}</strong></td><td></td></tr></tbody></table>` : ''}
+
+    <h2>Verpflegungsmehraufwand</h2>
+    <p class="section-note">Pauschalen gemaess BMF-Schreiben 05.12.2025 | ${data.trip.country}</p>
+    <table><thead><tr><th>Datum</th><th>Typ</th><th class="r">Pauschale</th><th>Mahlz.</th><th class="r">Kuerzung</th><th class="r">Betrag</th></tr></thead>
+    <tbody>${perdiemRows}<tr class="total-row"><td colspan="4"><strong>Summe Verpflegung</strong></td><td></td><td class="r"><strong>${fmtE(data.totals.perDiem)}</strong></td></tr></tbody></table>
+
+    <h2>Gesamtuebersicht</h2>
+    <table>
+        <tr><td>Fahrtkosten</td><td class="r">${fmtE(data.totals.transport)}</td></tr>
+        <tr><td>Uebernachtung</td><td class="r">${fmtE(data.totals.accommodation)}</td></tr>
+        <tr><td>Einzelbelege / Nebenkosten</td><td class="r">${fmtE(data.totals.expenses)}</td></tr>
+        <tr><td>Verpflegungspauschalen</td><td class="r">${fmtE(data.totals.perDiem)}</td></tr>
+    </table>
+    <div class="grand-total"><span>Erstattungsbetrag</span><span>${fmtE(data.totals.grandTotal)}</span></div>
+
+    <div class="footer">
+        <div><div class="sig-line">Datum, Unterschrift Mitarbeiter/in</div></div>
+        <div><div class="sig-line">Datum, Unterschrift Vorgesetzte/r</div></div>
+    </div>
+    <p class="small" style="margin-top:12px; text-align:center;">Ich bestaetige die Richtigkeit und Vollstaendigkeit der Angaben. Belege sind beigefuegt. | Kakao Mischa Reisekostenabrechnung</p>
+
+    <script>window.onload = function() { window.print(); }<\/script>
+    </body></html>`;
+
+    win.document.write(html);
+    win.document.close();
+    showToast('PDF-Export geoeffnet - bitte als PDF drucken/speichern.', 'success');
+}
+
+function fmtE(n) {
+    if (typeof n !== 'number' || isNaN(n)) return '0,00 EUR';
+    return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' EUR';
+}
+
+// ==================== GATHER DATA ====================
+function gatherFormData() {
+    const expenses = [];
+    document.querySelectorAll('#expenseBody tr').forEach(row => {
+        expenses.push({
+            date: row.querySelector('.exp-date')?.value || '',
+            category: row.querySelector('.exp-cat')?.value || '',
+            description: row.querySelector('.exp-desc')?.value || '',
+            net: parseFloat(row.querySelector('.exp-net')?.value) || 0,
+            vat: parseFloat(row.querySelector('.exp-vat')?.value) || 0,
+            gross: parseFloat(row.querySelector('.exp-gross')?.value) || 0,
+            receipt: row.querySelector('.exp-receipt')?.value || ''
+        });
+    });
+    const tickets = [];
+    document.querySelectorAll('#ticketBody tr').forEach(row => {
+        const desc = row.querySelector('input[type="text"]')?.value || '';
+        const amt = parseFloat(row.querySelector('.ticket-amount')?.value) || 0;
+        tickets.push({ description: desc, amount: amt });
+    });
+    const perdiemDays = [];
+    const typeLabels = { arrival:'Anreisetag', departure:'Abreisetag', full:'Ganzer Tag', single_partial:'Eintaegig (>8h)', single_short:'Eintaegig (<8h)' };
+    document.querySelectorAll('.perdiem-day').forEach(row => {
+        const spans = row.querySelectorAll(':scope > span');
+        const rate = parseFloat(row.dataset.rate) || 0;
+        const fullRate = parseFloat(row.dataset.fullrate) || rate;
+        let ded = 0;
+        const bf = row.querySelector('.meal-b')?.checked || false;
+        const lf = row.querySelector('.meal-l')?.checked || false;
+        const df = row.querySelector('.meal-d')?.checked || false;
+        if (bf) ded += fullRate * 0.20;
+        if (lf) ded += fullRate * 0.40;
+        if (df) ded += fullRate * 0.40;
+        ded = Math.min(ded, rate);
+        perdiemDays.push({
+            date: spans[0]?.textContent || '',
+            type: spans[1]?.textContent || '',
+            rate: rate,
+            breakfastProvided: bf, lunchProvided: lf, dinnerProvided: df,
+            deduction: Math.round(ded * 100) / 100,
+            result: Math.max(0, Math.round((rate - ded) * 100) / 100)
+        });
+    });
+
+    const rates = getActiveRates();
+    const countryName = document.getElementById('country').selectedOptions[0].textContent;
+
+    // Transport total
+    let transport = 0;
+    if (document.getElementById('transportType').value === 'car_private') {
+        const ow = parseFloat(document.getElementById('kmOneWay').value) || 0;
+        transport = (document.getElementById('kmRoundTrip').checked ? ow * 2 : ow) * 0.30;
+    }
+    tickets.forEach(t => transport += t.amount);
+
+    const accomm = parseAmount(document.getElementById('accommTotal').textContent);
+    const exp = parseAmount(document.getElementById('expenseTotal').textContent);
+    const pd = parseAmount(document.getElementById('perdiemTotal').textContent);
+
+    return {
+        company: 'Kakao Mischa',
+        employee: {
+            firstName: document.getElementById('firstName').value,
+            lastName: document.getElementById('lastName').value,
+            iban: document.getElementById('iban').value
+        },
+        trip: {
+            startDate: document.getElementById('tripStartDate').value,
+            startTime: document.getElementById('tripStartTime').value,
+            endDate: document.getElementById('tripEndDate').value,
+            endTime: document.getElementById('tripEndTime').value,
+            destination: document.getElementById('destination').value,
+            country: countryName,
+            countryCode: document.getElementById('country').value,
+            purposeType: document.getElementById('tripPurposeType').value,
+            purpose: document.getElementById('tripPurpose').value
+        },
+        transport: {
+            type: document.getElementById('transportType').value,
+            km: parseFloat(document.getElementById('kmOneWay').value) || 0,
+            roundTrip: document.getElementById('kmRoundTrip').checked,
+            kmStart: document.getElementById('kmStart').value,
+            kmEnd: document.getElementById('kmEnd').value
+        },
+        accommodation: {
+            type: document.getElementById('accommodationType').value,
+            nights: parseInt(document.getElementById('accommNights').value) || 0,
+            cost: parseFloat(document.getElementById('accommCost').value) || 0,
+            ratePerNight: rates.overnight
+        },
+        tickets: tickets,
+        expenses: expenses,
+        perDiem: perdiemDays,
+        totals: {
+            transport: Math.round(transport * 100) / 100,
+            accommodation: accomm,
+            expenses: exp,
+            perDiem: pd,
+            grandTotal: Math.round((transport + accomm + exp + pd) * 100) / 100
+        },
+        submittedAt: new Date().toISOString()
+    };
+}
+
+// ==================== HELPERS ====================
+function formatEUR(n) { return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' EUR'; }
+function formatDate(s) { if (!s) return '-'; const [y,m,d] = s.split('-'); return `${d}.${m}.${y}`; }
+function parseAmount(s) { if (!s) return 0; return parseFloat(s.replace(/[^\d,.-]/g,'').replace(',','.')) || 0; }
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = type === 'error' ? 'var(--error)' : 'var(--success)';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+}
+function resetForm() {
+    if (confirm('Alle Eingaben loeschen und neues Formular starten?')) {
+        document.querySelectorAll('input:not([type=checkbox]), textarea').forEach(el => el.value = '');
+        document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
+        document.getElementById('kmRoundTrip').checked = true;
+        document.getElementById('expenseBody').innerHTML = '';
+        document.getElementById('ticketBody').innerHTML = '<tr><td><input type="text" placeholder="z.B. ICE Frankfurt-Berlin"></td><td><input type="number" step="0.01" min="0" placeholder="0,00" class="ticket-amount" oninput="calcTickets()"></td><td><button class="btn-remove-row" onclick="removeRow(this)">&times;</button></td></tr>';
+        document.getElementById('country').value = 'DE';
+        onCountryChange();
+        goToStep(0);
+    }
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    addExpenseRow(); addExpenseRow(); addExpenseRow();
+    onCountryChange();
+});
+</script>
+</body>
+</html>
