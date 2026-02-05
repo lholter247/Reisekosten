@@ -48,7 +48,18 @@
             top: 0;
             z-index: 100;
         }
-        .header-left { display: flex; align-items: center; gap: 1.25rem; }
+        .header-left { display: flex; align-items: center; gap: 1.25rem; flex: 1; }
+        .header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+        .header-center img {
+            height: 65px;
+            width: auto;
+            filter: brightness(0) invert(1);
+        }
         .logo {
             width: 52px; height: 52px;
             background: var(--accent);
@@ -59,7 +70,7 @@
         }
         .header h1 { font-size: 1.4rem; font-weight: 700; }
         .header .subtitle { font-size: 0.85rem; opacity: 0.85; }
-        .header-actions { display: flex; gap: 0.75rem; }
+        .header-actions { display: flex; gap: 0.75rem; flex: 1; justify-content: flex-end; }
         .btn-header {
             background: rgba(212, 168, 67, 0.2);
             border: 1.5px solid rgba(212, 168, 67, 0.4);
@@ -412,6 +423,8 @@
             .form-grid.three-col { grid-template-columns: 1fr; }
             .summary-grid { grid-template-columns: 1fr; }
             .header { flex-direction: column; gap: 1rem; text-align: center; }
+            .header-left, .header-center, .header-actions { flex: none; }
+            .header-center img { height: 50px; }
             .header-actions { justify-content: center; }
             .progress-bar { padding: 0.75rem 1rem; }
             .step { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
@@ -454,6 +467,9 @@
             <h1>Kakao Mischa</h1>
             <div class="subtitle">Reisekostenabrechnung</div>
         </div>
+    </div>
+    <div class="header-center">
+        <img src="https://kakaomischa.de/cdn/shop/files/KM_Logo_KM_Logo_Original_Fullen.png?v=1651746479" alt="Kakao Mischa Logo">
     </div>
     <div class="header-actions">
         <button class="btn-header" onclick="resetForm()">Neu</button>
