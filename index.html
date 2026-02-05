@@ -1116,15 +1116,25 @@ function calculatePerDiem() {
         }
     }
 
+    const existingRows = document.querySelectorAll('.perdiem-day');
+    const savedMeals = {};
+    existingRows.forEach((row, i) => {
+        savedMeals[i] = {
+            b: row.querySelector('.meal-b')?.checked || false,
+            l: row.querySelector('.meal-l')?.checked || false,
+            d: row.querySelector('.meal-d')?.checked || false
+        };
+    });
+
     const typeLabels = { arrival:'Anreisetag', departure:'Abreisetag', full:'Ganzer Tag', single_partial:'Eintaegig (>8h)', single_short:'Eintaegig (<8h)' };
     let html = '';
     days.forEach((day, i) => {
         html += `<div class="perdiem-day" data-index="${i}" data-rate="${day.rate}" data-fullrate="${rates.full}">
             <span>${formatDate(day.date)}</span><span>${typeLabels[day.type]}</span><span>${formatEUR(day.rate)}</span>
             <div class="meal-checks">
-                <label class="meal-check"><input type="checkbox" class="meal-b" onchange="calcPerdiemTotals()"> F</label>
-                <label class="meal-check"><input type="checkbox" class="meal-l" onchange="calcPerdiemTotals()"> M</label>
-                <label class="meal-check"><input type="checkbox" class="meal-d" onchange="calcPerdiemTotals()"> A</label>
+                <label class="meal-check"><input type="checkbox" class="meal-b" onchange="calcPerdiemTotals()" ${savedMeals[i]?.b ? 'checked' : ''}> F</label>
+                <label class="meal-check"><input type="checkbox" class="meal-l" onchange="calcPerdiemTotals()" ${savedMeals[i]?.l ? 'checked' : ''}> M</label>
+                <label class="meal-check"><input type="checkbox" class="meal-d" onchange="calcPerdiemTotals()" ${savedMeals[i]?.d ? 'checked' : ''}> A</label>
             </div>
             <span class="perdiem-deduction">0,00 EUR</span>
             <span class="perdiem-result">${formatEUR(day.rate)}</span>
