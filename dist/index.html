@@ -1108,7 +1108,7 @@ function calculatePerDiem() {
     } else {
         let d = new Date(startDay);
         while (d <= endDay) {
-            const ds = d.toISOString().split('T')[0];
+            const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
             if (ds === sd) days.push({ date: ds, type: 'arrival', rate: rates.partial });
             else if (ds === ed) days.push({ date: ds, type: 'departure', rate: rates.partial });
             else days.push({ date: ds, type: 'full', rate: rates.full });
