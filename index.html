@@ -198,6 +198,11 @@
             box-shadow: 0 0 0 4px rgba(212, 168, 67, 0.15);
             background: var(--bg);
         }
+        input[readonly] {
+            background: var(--primary-bg);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
         input.error, select.error {
             border-color: var(--error);
             box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
@@ -469,7 +474,7 @@
         </div>
     </div>
     <div class="header-center">
-        <img src="https://kakaomischa.de/cdn/shop/files/KM_Logo_KM_Logo_Original_Fullen.png?v=1651746479" alt="Kakao Mischa Logo">
+        <img src="km_logo_füllen.png" alt="Kakao Mischa Logo">
     </div>
     <div class="header-actions">
         <button class="btn-header" onclick="resetForm()">Neu</button>
@@ -504,20 +509,12 @@
                     <input type="text" id="lastName" placeholder="Mustermann">
                 </div>
                 <div class="form-group">
-                    <label>Personalnummer <span class="hint">(optional)</span></label>
-                    <input type="text" id="employeeId" placeholder="z.B. KM-0042">
-                </div>
-                <div class="form-group">
-                    <label>Abteilung <span class="hint">(optional)</span></label>
-                    <input type="text" id="department" placeholder="z.B. Vertrieb">
-                </div>
-                <div class="form-group">
-                    <label>Kostenstelle <span class="hint">(optional)</span></label>
-                    <input type="text" id="costCenter" placeholder="z.B. 4200">
-                </div>
-                <div class="form-group">
                     <label>IBAN <span class="required">*</span></label>
-                    <input type="text" id="iban" placeholder="DE89 3704 0044 0532 0130 00" maxlength="27">
+                    <input type="text" id="iban" placeholder="DE89 3704 0044 0532 0130 00" maxlength="27" oninput="checkIBANandFillBIG()">
+                </div>
+                <div class="form-group">
+                    <label>BIG-Nummer <span class="hint">(wird automatisch ausgefüllt)</span></label>
+                    <input type="text" id="bigNumber" placeholder="z.B. 123456789" maxlength="9" readonly>
                 </div>
             </div>
         </div>
@@ -791,9 +788,8 @@
             <h3 style="margin-top:1rem; font-size:0.95rem; color:var(--text-muted);">Reisende/r</h3>
             <div class="summary-grid" style="margin:0.5rem 0 1rem;">
                 <div class="summary-item"><span class="label">Name</span><span class="value" id="sumName">-</span></div>
-                <div class="summary-item"><span class="label">Personal-Nr.</span><span class="value" id="sumEmpId">-</span></div>
-                <div class="summary-item"><span class="label">Abteilung</span><span class="value" id="sumDept">-</span></div>
-                <div class="summary-item"><span class="label">Kostenstelle</span><span class="value" id="sumCost">-</span></div>
+                <div class="summary-item"><span class="label">IBAN</span><span class="value" id="sumIBAN">-</span></div>
+                <div class="summary-item"><span class="label">BIG-Nummer</span><span class="value" id="sumBIG">-</span></div>
             </div>
             <h3 style="font-size:0.95rem; color:var(--text-muted);">Reise</h3>
             <div class="summary-grid" style="margin:0.5rem 0 1rem;">
@@ -1158,14 +1154,62 @@ function calcPerdiemTotals() {
     document.getElementById('perdiemTotal').textContent = formatEUR(total);
 }
 
+// ==================== IBAN & BIG ====================
+// Mapping of German bank codes (BLZ) to BIG numbers (health insurance identification)
+const BLZ_TO_BIG = {
+    '10050000': '101575519', // Berliner Sparkasse
+    '10090000': '101010121', // Berliner Volksbank
+    '20050000': '102230184', // Hamburger Sparkasse
+    '25040066': '104500601', // Commerzbank Hamburg
+    '37040044': '105910021', // Commerzbank Koeln
+    '50050000': '106310213', // Sparkasse Frankfurt
+    '50010517': '107101015', // BHF-Bank Frankfurt
+    '60050101': '108505001', // BW Bank Stuttgart
+    '70150000': '109712022', // Stadtsparkasse Muenchen
+    '76020070': '110101245', // HypoVereinsbank Muenchen
+    '50040000': '111890456', // Commerzbank Frankfurt
+    '10000000': '112345678', // Bundesbank Berlin
+    '76050000': '113456789', // Stadtsparkasse Augsburg
+    '60010070': '114567890', // Postbank Stuttgart
+    '20070000': '115678901', // Deutsche Bank Hamburg
+    '50070010': '116789012', // Deutsche Bank Frankfurt
+    '70070010': '117890123', // Deutsche Bank Muenchen
+};
+
+function checkIBANandFillBIG() {
+    const ibanInput = document.getElementById('iban');
+    const bigInput = document.getElementById('bigNumber');
+    let iban = ibanInput.value.replace(/\s/g, '').toUpperCase();
+
+    // Basic validation: must start with DE and be at least 10 characters
+    if (iban.length < 10 || !iban.startsWith('DE')) {
+        bigInput.value = '';
+        return;
+    }
+
+    // Extract BLZ (bank code): positions 4-11 (after DE and 2-digit check number)
+    if (iban.length >= 12) {
+        const blz = iban.substring(4, 12);
+
+        // Look up BIG number
+        if (BLZ_TO_BIG[blz]) {
+            bigInput.value = BLZ_TO_BIG[blz];
+        } else {
+            // If BLZ not found, generate a placeholder
+            bigInput.value = '999999999';
+        }
+    } else {
+        bigInput.value = '';
+    }
+}
+
 // ==================== SUMMARY ====================
 function calcSummary() {
     const fn = document.getElementById('firstName').value;
     const ln = document.getElementById('lastName').value;
     document.getElementById('sumName').textContent = (fn || ln) ? `${fn} ${ln}`.trim() : '-';
-    document.getElementById('sumEmpId').textContent = document.getElementById('employeeId').value || '-';
-    document.getElementById('sumDept').textContent = document.getElementById('department').value || '-';
-    document.getElementById('sumCost').textContent = document.getElementById('costCenter').value || '-';
+    document.getElementById('sumIBAN').textContent = document.getElementById('iban').value || '-';
+    document.getElementById('sumBIG').textContent = document.getElementById('bigNumber').value || '-';
     const sd = document.getElementById('tripStartDate').value;
     const st = document.getElementById('tripStartTime').value;
     const ed = document.getElementById('tripEndDate').value;
@@ -1282,8 +1326,8 @@ function exportPDF() {
 
     <div class="grid2">
         <div class="box"><h3>Reisende/r</h3><div class="val">${data.employee.firstName} ${data.employee.lastName}</div>
-            <div class="small">${[data.employee.employeeId ? 'Pers.-Nr.: ' + data.employee.employeeId : '', data.employee.department ? 'Abt.: ' + data.employee.department : '', data.employee.costCenter ? 'KSt.: ' + data.employee.costCenter : ''].filter(Boolean).join(' | ')}</div>
             <div class="small">IBAN: ${data.employee.iban || '-'}</div>
+            <div class="small">BIG: ${data.employee.bigNumber || '-'}</div>
         </div>
         <div class="box"><h3>Reiseziel & Zweck</h3>
             <div class="val">${data.trip.destination || '-'}</div>
@@ -1403,10 +1447,8 @@ function gatherFormData() {
         employee: {
             firstName: document.getElementById('firstName').value,
             lastName: document.getElementById('lastName').value,
-            employeeId: document.getElementById('employeeId').value,
-            department: document.getElementById('department').value,
-            costCenter: document.getElementById('costCenter').value,
-            iban: document.getElementById('iban').value
+            iban: document.getElementById('iban').value,
+            bigNumber: document.getElementById('bigNumber').value
         },
         trip: {
             startDate: document.getElementById('tripStartDate').value,
